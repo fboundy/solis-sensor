@@ -7,23 +7,24 @@ For more information: https://github.com/hultenvp/solis-sensor/
 
 from __future__ import annotations
 
+import asyncio
+import base64
 import hashlib
 
 # from hashlib import sha1
+# from hashlib import sha1
 import hmac
-import base64
-import asyncio
-from datetime import datetime
-from datetime import timezone
-from http import HTTPStatus
 import json
 import logging
 import math
+from datetime import datetime, timezone
+from http import HTTPStatus
 from typing import Any
-from aiohttp import ClientError, ClientSession
+
+import aiofiles
 import async_timeout
 import yaml
-import aiofiles
+from aiohttp import ClientError, ClientSession
 
 from .ginlong_base import BaseAPI, GinlongData, PortalConfig
 from .ginlong_const import *
@@ -33,7 +34,7 @@ from .soliscloud_const import *
 _LOGGER = logging.getLogger(__name__)
 
 # VERSION
-VERSION = "0.5.5"
+VERSION = "0.6.0"
 
 # API NAME
 API_NAME = "SolisCloud"
@@ -52,21 +53,20 @@ CONTROL_RETRIES = 5
 
 VERB = "POST"
 
-INVERTER_DETAIL_LIST = "/v1/api/inverterDetailList"
+INVERTER_DETAIL = "/v1/api/inverterDetail"
 PLANT_DETAIL = "/v1/api/stationDetail"
 PLANT_LIST = "/v1/api/userStationList"
 AUTHENTICATE = "/v2/api/login"
 CONTROL = "/v2/api/control"
 AT_READ = "/v2/api/atRead"
 
-from .control_const import HMI_CID, ALL_CONTROLS
-
+from .control_const import ALL_CONTROLS, HMI_CID
 
 InverterDataType = dict[str, dict[str, list]]
 
 """{endpoint: [payload type, {key type, decimal precision}]}"""
 INVERTER_DATA: InverterDataType = {
-    INVERTER_DETAIL_LIST: {
+    INVERTER_DETAIL: {
         INVERTER_SERIAL: ["sn", str, None],
         INVERTER_PLANT_ID: ["stationId", str, None],
         INVERTER_DEVICE_ID: ["id", str, None],
@@ -304,7 +304,6 @@ class SoliscloudAPI(BaseAPI):
                 _LOGGER.info("Failed to acquire plant name, login failed")
                 self._is_online = False
             try:
-                _LOGGER.info(f">>> {self.config._password}")
                 token = await self._fetch_token(self.config.username, self.config._password)
                 self._token = token
                 if token == "":
@@ -336,7 +335,7 @@ class SoliscloudAPI(BaseAPI):
             result_json: dict = result[CONTENT]
             if result_json["code"] != "0":
                 _LOGGER.info(
-                    "%s responded with error: %s:%s", INVERTER_DETAIL_LIST, result_json["code"], result_json["msg"]
+                    "%s responded with error: %s:%s", INVERTER_DETAIL, result_json["code"], result_json["msg"]
                 )
                 return device_ids
             try:
@@ -396,37 +395,31 @@ class SoliscloudAPI(BaseAPI):
         """
 
         # Get inverter details
-        params = {}
+        params = {"id": device_id, "sn": device_serial}
 
-        result = await self._post_data_json(INVERTER_DETAIL_LIST, params)
+        result = await self._post_data_json(INVERTER_DETAIL, params)
 
         jsondata = None
-        record = None
         if result[SUCCESS] is True:
             jsondata = result[CONTENT]
             if jsondata["code"] != "0":
-                _LOGGER.info("%s responded with error: %s:%s", INVERTER_DETAIL_LIST, jsondata["code"], jsondata["msg"])
+                _LOGGER.info("%s responded with error: %s:%s", INVERTER_DETAIL, jsondata["code"], jsondata["msg"])
                 return None
-            try:
-                for record in jsondata["data"]["records"]:
-                    if record.get("sn") == device_serial and record.get("id") == device_id:
-                        return record
-            except TypeError:
-                _LOGGER.debug("Response contains unexpected data: %s", jsondata)
         else:
             _LOGGER.info("Unable to fetch details for device with ID: %s", device_id)
-        return record
+        return jsondata
 
     def _collect_inverter_data(self, payload: dict[str, Any]) -> None:
         """Fetch dynamic properties"""
-        attributes = INVERTER_DATA[INVERTER_DETAIL_LIST]
+        jsondata = payload["data"]
+        attributes = INVERTER_DATA[INVERTER_DETAIL]
         collect_energy_today = True
         try:
             collect_energy_today = not self.config.workarounds["use_energy_today_from_plant"]
         except KeyError:
             pass
         if collect_energy_today:
-            _LOGGER.debug("Using inverterDetailList for energy_today")
+            _LOGGER.debug("Using inverterDetail for energy_today")
 
         for dictkey in attributes:
             key = attributes[dictkey][0]
@@ -435,7 +428,7 @@ class SoliscloudAPI(BaseAPI):
             if key is not None:
                 value = None
                 if dictkey != INVERTER_ENERGY_TODAY or collect_energy_today:
-                    value = self._get_value(payload, key, type_, precision)
+                    value = self._get_value(jsondata, key, type_, precision)
                 if value is not None:
                     self._data[dictkey] = value
 
