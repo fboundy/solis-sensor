@@ -304,6 +304,7 @@ class SoliscloudAPI(BaseAPI):
                 _LOGGER.info("Failed to acquire plant name, login failed")
                 self._is_online = False
             try:
+                _LOGGER.info(f">>> {self.config._password}")
                 token = await self._fetch_token(self.config.username, self.config._password)
                 self._token = token
                 if token == "":

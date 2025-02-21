@@ -255,7 +255,7 @@ class InverterService:
                     elif getattr(data, INVERTER_STATE) == 1:
                         last_updated_state = None
                         try:
-                            last_updated_state = self._subscriptions[serial][INVERTER_STATE][0].measured
+                            last_updated_state = self._subscriptions[serial][INVERTER_STATE].measured
                         except KeyError:
                             pass
                         if last_updated_state is not None:
