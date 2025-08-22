@@ -1072,19 +1072,30 @@ ALL_CONTROLS = {
                 name="Energy Storage Control Switch",
                 key="energy_storage_control_switch",
                 option_dict={
-                    "1": "Self-Use - No Grid Charging",
-                    "3": "Timed Charge/Discharge - No Grid Charging",
-                    "17": "Backup/Reserve - No Grid Charging",
-                    "33": "Self-Use - No Timed Charge/Discharge",
-                    "35": "Self-Use",
-                    "37": "Off-Grid Mode",
-                    "41": "Battery Awaken",
-                    "43": "Battery Awaken + Timed Charge/Discharge",
-                    "49": "Backup/Reserve - No Timed Charge/Discharge",
-                    "51": "Backup/Reserve",
-                    "64": "Feed-in priority - No Grid Charging",
-                    "96": "Feed-in priority - No Timed Charge/Discharge",
-                    "98": "Feed-in priority",
+                    "35": "Self-Use - Allow Timed Charge/Discharge, Allow Grid Charging",
+                    "3":  "Self-Use - Allow Timed Charge/Discharge, No Grid Charging",
+                    "33": "Self-Use - No Timed Charge/Discharge, Allow Grid Charging",
+                    "1":  "Self-Use - No Timed Charge/Discharge, No Grid Charging",
+                    
+                    "51": "Self-Use with Backup - Allow Timed Charge/Discharge, Allow Grid Charging",
+                    "19": "Self-Use with Backup - Allow Timed Charge/Discharge, No Grid Charging",
+                    "49": "Self-Use with Backup - No Timed Charge/Discharge, Allow Grid Charging",
+                    "17": "Self-Use with Backup - No Timed Charge/Discharge, No Grid Charging",
+                   
+                    "43": "Battery Awaken - Allow Timed Charge/Discharge",
+                    "41": "Battery Awaken - No Timed Charge/Discharge",
+                    
+                    "98": "Feed-in Priority - Allow Timed Charge/Discharge, Allow Grid Charging",
+                    "66": "Feed-in Priority - Allow Timed Charge/Discharge, No Grid Charging",
+                    "96": "Feed-in Priority - No Timed Charge/Discharge, Allow Grid Charging",
+                    "64": "Feed-in Priority - No Timed Charge/Discharge, No Grid Charging",
+                    
+                    "114": "Feed-in Priority with Backup - Allow Timed Charge/Discharge, Allow Grid Charging",
+                    "82":  "Feed-in Priority with Backup - Allow Timed Charge/Discharge, No Grid Charging",
+                    "112": "Feed-in Priority with Backup - No Timed Charge/Discharge, Allow Grid Charging",
+                    "80":  "Feed-in Priority with Backup - No Timed Charge/Discharge, No Grid Charging",
+                    
+                    "37": "Off-Grid", 
                 },
                 icon="mdi:dip-switch",
             )
